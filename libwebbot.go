@@ -109,7 +109,7 @@ func ChromeBot(url string, actions ...BotAction) error {
 
 	time.Sleep(ActionInterval)
 
-	for i, action := range actions {
+	for _, action := range actions {
 		if action.Action >= Go {
 			switch action.Action {
 			case Go:
@@ -171,7 +171,7 @@ func ChromeBot(url string, actions ...BotAction) error {
 					return err
 				}
 			case ExecuteScript:
-				if _, err := wd.ExecuteScript(action.ActionArg, []selenium.WebElement{element}); err != nil {
+				if _, err := wd.ExecuteScript(action.ActionArg, nil); err != nil {
 					return err
 				}
 			case ElementScreenshot:
