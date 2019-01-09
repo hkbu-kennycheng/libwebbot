@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/tebeka/selenium"
 )
@@ -17,7 +16,6 @@ var (
 	WindowWidth      = 1600
 	WindowHeight     = 2700
 	IsDebug          = false
-	ActionInterval   = time.Second
 )
 
 type KeyAction uint8
@@ -36,13 +34,16 @@ const (
 	Refresh
 	AddjQuery
 	LogCurrentURL
+	Wait
 	WindowScreenshot
 )
+
+type Condition selenium.Condition
 
 type BotAction struct {
 	XPath     string
 	Action    KeyAction
-	ActionArg string
+	ActionArg interface{} // string or Condition
 }
 
 func findVisibleElementByXPATH(wd selenium.WebDriver, xpath string) selenium.WebElement {
@@ -107,13 +108,11 @@ func ChromeBot(url string, actions ...BotAction) error {
 		return err
 	}
 
-	time.Sleep(ActionInterval)
-
 	for _, action := range actions {
 		if action.Action >= Go {
 			switch action.Action {
 			case Go:
-				if err := wd.Get(action.ActionArg); err != nil {
+				if err := wd.Get(action.ActionArg.(string)); err != nil {
 					return err
 				}
 			case GoBack:
@@ -136,19 +135,21 @@ func ChromeBot(url string, actions ...BotAction) error {
 				if currentURL, err := wd.CurrentURL(); err != nil {
 					return err
 				} else {
-					log.Printf(action.ActionArg, currentURL)
+					log.Printf(action.ActionArg.(string), currentURL)
+				}
+			case Wait:
+				if err := wd.Wait(action.ActionArg.(selenium.Condition)); err != nil {
+					return err
 				}
 			case WindowScreenshot:
 				if b, err := wd.Screenshot(); err != nil {
 					return err
 				} else {
-					if err := saveFile(action.ActionArg, b); err != nil {
+					if err := saveFile(action.ActionArg.(string), b); err != nil {
 						return err
 					}
 				}
 			}
-			wd.AcceptAlert()
-			time.Sleep(ActionInterval)
 			continue
 		}
 
@@ -159,7 +160,7 @@ func ChromeBot(url string, actions ...BotAction) error {
 					return err
 				}
 			case SendKeys:
-				if err := element.SendKeys(action.ActionArg); err != nil {
+				if err := element.SendKeys(action.ActionArg.(string)); err != nil {
 					return err
 				}
 			case Submit:
@@ -171,27 +172,21 @@ func ChromeBot(url string, actions ...BotAction) error {
 					return err
 				}
 			case ExecuteScript:
-				if _, err := wd.ExecuteScript(action.ActionArg, nil); err != nil {
+				if _, err := wd.ExecuteScript(action.ActionArg.(string), nil); err != nil {
 					return err
 				}
 			case ElementScreenshot:
 				if b, err := element.Screenshot(true); err != nil {
 					return err
 				} else {
-					if err := saveFile(action.ActionArg, b); err != nil {
+					if err := saveFile(action.ActionArg.(string), b); err != nil {
 						return err
 					}
 				}
 
 			}
-			wd.AcceptAlert()
-			time.Sleep(ActionInterval)
 		}
 	}
 
 	return nil
-}
-
-func ChromeGoAndFill() {
-
 }
