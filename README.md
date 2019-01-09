@@ -1,9 +1,7 @@
 # libwebbot
-----
 libwebbot is a library for me to run UAT of Web projects automatically.
 
 ## Usage
-
 ```go
 package main
 
